@@ -34,28 +34,9 @@ import {
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 const emptyRequirement =
-  "用户在企业后台创建一条新的营销活动，配置活动名称、开始结束时间、参与门槛和预算上限。系统需要校验时间范围、预算格式、权限和重复提交，并在创建成功后进入待审核状态。";
+  "";
 
-const seedDoc =
-  "历史 PRD：营销活动创建页包含活动名称、时间范围、预算上限、参与门槛、目标人群和提交审核。活动名称不可重复，开始时间必须晚于当前时间，结束时间必须晚于开始时间。提交后状态为待审核，审核通过后才可投放。\n\n历史 Bug：预算上限输入 0.01 元时被错误四舍五入为 0，导致活动无法创建。重复点击提交按钮会产生两条待审核活动。普通运营账号绕过前端入口后仍可调用创建接口。";
-
-const figmaSeed = JSON.stringify(
-  {
-    document: {
-      id: "1:1",
-      name: "创建活动弹窗",
-      type: "FRAME",
-      children: [
-        { id: "1:2", name: "活动名称输入框", type: "Input", props: { required: true, placeholder: "请输入活动名称" } },
-        { id: "1:3", name: "预算上限输入框", type: "Input", props: { required: true, min: 0.01 } },
-        { id: "1:4", name: "提交按钮", type: "Button" },
-        { id: "1:5", name: "错误提示", type: "Text" },
-      ],
-    },
-  },
-  null,
-  2,
-);
+const emptyFigmaJson = "{\n  \"document\": {\n    \"id\": \"\",\n    \"name\": \"\",\n    \"type\": \"FRAME\",\n    \"children\": []\n  }\n}";
 
 function App() {
   const [health, setHealth] = useState(null);
@@ -66,14 +47,14 @@ function App() {
   const [figmaContexts, setFigmaContexts] = useState([]);
   const [uiItems, setUiItems] = useState([]);
   const [requirement, setRequirement] = useState(emptyRequirement);
-  const [docTitle, setDocTitle] = useState("营销活动历史资产");
+  const [docTitle, setDocTitle] = useState("");
   const [docType, setDocType] = useState("mixed");
-  const [docContent, setDocContent] = useState(seedDoc);
-  const [sourceName, setSourceName] = useState("飞书营销活动 PRD");
-  const [sourceUrl, setSourceUrl] = useState("https://example.feishu.cn/docx/mocktoken");
-  const [figmaUrl, setFigmaUrl] = useState("https://www.figma.com/design/MOCK/App?node-id=1:1");
-  const [figmaJson, setFigmaJson] = useState(figmaSeed);
-  const [query, setQuery] = useState("营销活动 创建 预算 重复提交 权限");
+  const [docContent, setDocContent] = useState("");
+  const [sourceName, setSourceName] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [figmaUrl, setFigmaUrl] = useState("");
+  const [figmaJson, setFigmaJson] = useState(emptyFigmaJson);
+  const [query, setQuery] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [generation, setGeneration] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -128,13 +109,6 @@ function App() {
     } finally {
       setBusy("");
     }
-  }
-
-  async function seedKnowledge() {
-    await run("seed", async () => {
-      await request("/api/knowledge/seed", { method: "POST", body: "{}" });
-      setDocuments((await request("/api/knowledge/documents")).items);
-    });
   }
 
   async function importKnowledge() {
@@ -208,7 +182,7 @@ function App() {
           figma_context_id: latestFigmaContext?.id,
           generation_strategy: ["functional", "boundary", "ui_interaction"],
           save_as_requirement: save,
-          requirement_title: "营销活动创建",
+          requirement_title: "需求用例集",
         }),
       });
       setGeneration(payload);
@@ -216,7 +190,7 @@ function App() {
       setSearchResult(payload.retrieved_context);
       if (payload.requirement_id) {
         setActiveRequirement({ id: payload.requirement_id, baseline_id: payload.baseline_id });
-        setRequirements((current) => [{ id: payload.requirement_id, title: "营销活动创建" }, ...current]);
+        setRequirements((current) => [{ id: payload.requirement_id, title: "需求用例集" }, ...current]);
       }
     });
   }
@@ -393,7 +367,6 @@ function App() {
             <textarea value={docContent} onChange={(event) => setDocContent(event.target.value)} rows={5} />
             <div className="action-row">
               <button className="button primary" onClick={importKnowledge}><Database size={16} /> 手动导入</button>
-              <button className="button secondary" onClick={seedKnowledge}><Sparkles size={16} /> 样例资产</button>
             </div>
             <div className="divider" />
             <input value={sourceName} onChange={(event) => setSourceName(event.target.value)} />

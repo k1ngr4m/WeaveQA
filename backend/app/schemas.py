@@ -127,7 +127,7 @@ class FigmaContextCreate(BaseModel):
 
 
 class FigmaJsonImport(BaseModel):
-    figma_url: str = "https://figma.local/file/mock?node-id=1:1"
+    figma_url: str
     requirement_id: str | None = None
     payload: dict
 

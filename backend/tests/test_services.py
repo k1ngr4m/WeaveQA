@@ -46,24 +46,48 @@ def test_extract_ui_items() -> None:
     assert "feedback" in categories
 
 
+def create_test_knowledge(client: TestClient) -> None:
+    client.post(
+        "/api/knowledge/documents",
+        json={
+            "title": "Test Requirement Notes",
+            "asset_type": "prd",
+            "content": "Create workflow includes name, date range, amount limit, role permission and submit state. Start date must be later than now.",
+        },
+    )
+    client.post(
+        "/api/knowledge/documents",
+        json={
+            "title": "Test Regression Notes",
+            "asset_type": "bug",
+            "content": "Amount precision 0.01 was rounded incorrectly. Repeated submit created duplicate records. Unauthorized user bypassed endpoint guard.",
+        },
+    )
+
+
+def figma_fixture() -> dict:
+    return {
+        "document": {
+            "id": "1:1",
+            "name": "Create Dialog",
+            "type": "FRAME",
+            "children": [
+                {"id": "1:2", "name": "Amount Limit Input", "type": "Input"},
+                {"id": "1:3", "name": "Submit Button", "type": "Button"},
+                {"id": "1:4", "name": "Error Message", "type": "Text"},
+            ],
+        }
+    }
+
+
 def test_api_generation_diff_flow() -> None:
     with TestClient(app) as client:
-        client.post("/api/knowledge/seed")
+        create_test_knowledge(client)
         figma = client.post(
             "/api/figma/contexts/import-json",
             json={
-                "figma_url": "https://www.figma.com/design/MOCK/App?node-id=1:1",
-                "payload": {
-                    "document": {
-                        "id": "1:1",
-                        "name": "创建活动弹窗",
-                        "type": "FRAME",
-                        "children": [
-                            {"id": "1:2", "name": "预算上限输入框", "type": "Input"},
-                            {"id": "1:3", "name": "提交按钮", "type": "Button"},
-                        ],
-                    }
-                },
+                "figma_url": "https://www.figma.com/design/TESTFILE/App?node-id=1:1",
+                "payload": figma_fixture(),
             },
         )
         assert figma.status_code == 200
@@ -71,11 +95,11 @@ def test_api_generation_diff_flow() -> None:
         generation = client.post(
             "/api/cases/generate",
             json={
-                "requirement": "用户创建营销活动，需要校验预算、时间、权限和重复提交。",
+                "requirement": "User creates a record and must validate amount, date, permission and repeated submit.",
                 "mode": "prd_bug",
                 "figma_context_id": context_id,
                 "save_as_requirement": True,
-                "requirement_title": "营销活动创建",
+                "requirement_title": "Create Workflow",
             },
         )
         assert generation.status_code == 200
@@ -97,14 +121,14 @@ def test_api_generation_diff_flow() -> None:
 
 def test_review_graph_and_view_state() -> None:
     with TestClient(app) as client:
-        client.post("/api/knowledge/seed")
+        create_test_knowledge(client)
         generation = client.post(
             "/api/cases/generate",
             json={
-                "requirement": "用户创建营销活动，需要校验预算、时间、权限和重复提交。",
+                "requirement": "User creates a record and must validate amount, date, permission and repeated submit.",
                 "mode": "prd_bug",
                 "save_as_requirement": True,
-                "requirement_title": "营销活动创建",
+                "requirement_title": "Create Workflow",
             },
         )
         requirement_id = generation.json()["requirement_id"]

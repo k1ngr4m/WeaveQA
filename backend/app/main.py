@@ -85,25 +85,6 @@ def create_knowledge_document(payload: DocumentCreate, db: Session = Depends(get
     return read_document(create_document(db, payload)).model_dump()
 
 
-@app.post("/api/knowledge/seed")
-def seed_knowledge(db: Session = Depends(get_db)) -> dict[str, object]:
-    samples = [
-        DocumentCreate(
-            title="营销活动 PRD",
-            asset_type="prd",
-            content="营销活动创建页包含活动名称、时间范围、预算上限、参与门槛、目标人群和提交审核。活动名称不可重复，开始时间必须晚于当前时间，结束时间必须晚于开始时间。提交后状态为待审核，审核通过后才可投放。",
-        ),
-        DocumentCreate(
-            title="营销活动历史 Bug",
-            asset_type="bug",
-            content="预算上限输入 0.01 元时被错误四舍五入为 0，导致活动无法创建。重复点击提交按钮会产生两条待审核活动。普通运营账号绕过前端入口后仍可调用创建接口。",
-        ),
-    ]
-    for sample in samples:
-        create_document(db, sample)
-    return {"ok": True, "documents": db.query(models.KnowledgeDocument).count(), "chunks": db.query(models.KnowledgeChunk).count()}
-
-
 @app.get("/api/knowledge/chunks")
 def list_chunks(document_id: str | None = None, db: Session = Depends(get_db)) -> dict[str, list[dict]]:
     query = db.query(models.KnowledgeChunk)

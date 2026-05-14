@@ -65,7 +65,7 @@ Compare coverage score, missed risks, Bug regression points, retrieved context, 
 
 ## Integrated Flow Check
 
-1. Import or seed knowledge assets.
+1. Import knowledge assets.
 2. Import Figma context JSON or sync through a running Figma MCP server.
 3. Generate cases with `save_as_requirement=true`.
 4. Create a diff run for the saved requirement.

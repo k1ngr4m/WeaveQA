@@ -11,7 +11,9 @@ from ..config import get_settings
 def parse_figma_url(figma_url: str) -> tuple[str, str | None]:
     parsed = urlparse(figma_url)
     match = re.search(r"/(?:file|design)/([^/]+)", parsed.path)
-    file_key = match.group(1) if match else "mock"
+    if not match:
+        raise ValueError("Invalid Figma URL: missing file or design key")
+    file_key = match.group(1)
     query = parse_qs(parsed.query)
     node_id = query.get("node-id", [None])[0]
     return file_key, node_id
