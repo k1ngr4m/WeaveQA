@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: weaveqa-postgres
+    environment:
+      POSTGRES_DB: weaveqa
+      POSTGRES_USER: weaveqa
+      POSTGRES_PASSWORD: weaveqa
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: weaveqa-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  backend:
+    image: python:3.11-slim
+    container_name: weaveqa-backend
+    working_dir: /app
+    command: sh -c "pip install -r backend/requirements.txt && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://weaveqa:weaveqa@postgres:5432/weaveqa
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: weaveqa_knowledge_chunks
+      FIGMA_MCP_SERVER_URL: http://host.docker.internal:3845/sse
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - qdrant
+
+  frontend:
+    image: node:24-alpine
+    container_name: weaveqa-frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --port 5173"
+    environment:
+      VITE_API_BASE: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
+  qdrant-data:
